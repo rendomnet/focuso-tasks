@@ -1,0 +1,29 @@
+{
+  "name": "focuso-tasks",
+  "version": "1.0.0",
+  "description": "focuso-tasks helpers",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/rendomnet/focuso-tasks.git"
+  },
+  "keywords": [
+    "tree"
+  ],
+  "author": "Ruslan Zhunussov",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/rendomnet/focuso-tasks/issues"
+  },
+  "homepage": "https://github.com/rendomnet/focuso-tasks#readme",
+  "dependencies": {
+    "firestore-size": "^2.0.7"
+  },
+  "devDependencies": {
+    "typescript": "^4.5.4"
+  }
+}
