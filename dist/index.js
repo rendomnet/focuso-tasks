@@ -1,0 +1,151 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const firestore_size_1 = __importDefault(require("firestore-size"));
+const helpers_1 = require("./helpers");
+class FocusoTasks {
+    constructor(props) {
+        this.containers = [];
+        this.containerQuantity = this.containers.length;
+        this.containerLatest = this.containers[this.containerQuantity - 1] || null;
+        this.dictionary = {};
+        this.stats = {};
+        this.addDoc = () => null;
+        this.updateDoc = () => null;
+        this.deleteField = () => null;
+    }
+    getDate(value) {
+        return value;
+        // return !value
+        //   ? new Date()
+        //   : value.seconds
+        //   ? new Date(value.seconds * 1000)
+        //   : new Date(value);
+    }
+    /**
+     * Add task
+     * @param payload
+     * @returns
+     */
+    add(payload) {
+        var _a;
+        const { text, category, userId } = payload;
+        const timestamp = new Date().valueOf();
+        // Build task data
+        const data = {
+            [timestamp]: this.pack({
+                text: text,
+                status: 0,
+                createdAt: new Date(timestamp),
+                category: String(category),
+            }),
+        };
+        // Create new container
+        // If no  containers or if latest container size exceeds 1mb
+        if (this.containers.length < 1 || (0, firestore_size_1.default)(this.containerLatest) > 999000) {
+            this.addDoc({
+                data: Object.assign(Object.assign({}, data), { ownerId: userId, order: this.containerQuantity - 1 }),
+            });
+        }
+        else {
+            if (!((_a = this.containerLatest) === null || _a === void 0 ? void 0 : _a.id))
+                return;
+            this.updateDoc({
+                id: this.containerLatest.id,
+                data: Object.assign({}, data),
+            });
+        }
+    }
+    delete(id) {
+        const task = this.dictionary[id];
+        const containerId = this.containers[(task === null || task === void 0 ? void 0 : task.order) || 0].id;
+        this.deleteField({
+            collection: "todos",
+            containerId: containerId,
+            taskId: id,
+        });
+    }
+    update(payload) {
+        const { id, value } = payload;
+        const task = this.dictionary[id];
+        const containerId = this.containers[(task === null || task === void 0 ? void 0 : task.order) || 0].id;
+        const newData = Object.assign(Object.assign({}, task), value);
+        const result = this.pack(newData);
+        this.updateDoc({
+            collection: "todos",
+            id: containerId,
+            data: {
+                [id]: result,
+            },
+        });
+    }
+    /**
+     * Convert firebase docs list to tasks dictionary
+     * @param containerList - array of container docs
+     * @returns
+     */
+    load(containerList) {
+        var _a;
+        const dictionary = {};
+        this.containers = [...containerList];
+        if ((containerList === null || containerList === void 0 ? void 0 : containerList.length) > 0) {
+            let stats = {
+                0: { 0: 0, 1: 0 },
+            };
+            for (const [index, container] of containerList.entries()) {
+                // Loop container
+                for (let key in container) {
+                    // Skip container keys that are not dictionary keys
+                    if (["ownerId", "order", "id"].includes(key))
+                        continue;
+                    const taskPacked = container[key];
+                    dictionary[key] = Object.assign(Object.assign({}, this.unpack(taskPacked, key, index)), { order: container.order });
+                    // Count categories
+                    const categoryId = dictionary[key].category;
+                    if ((_a = stats === null || stats === void 0 ? void 0 : stats[categoryId]) === null || _a === void 0 ? void 0 : _a[dictionary[key].status]) {
+                        stats[categoryId][dictionary[key].status]++;
+                    }
+                    else {
+                        (0, helpers_1.setDeep)(stats, [categoryId, dictionary[key].status], 1);
+                    }
+                }
+            }
+            this.dictionary = dictionary;
+            this.stats = stats;
+            return {
+                dictionary,
+                stats,
+            };
+        }
+    }
+    /**
+     * Task to array task
+     * @param item
+     * @returns
+     */
+    pack(item) {
+        return [
+            item.text,
+            Number(item.status),
+            item.createdAt,
+            String(item.category),
+            item.completedAt || undefined,
+        ];
+    }
+    /**
+     * Array task to object task
+     * @param item
+     * @param id
+     * @param index
+     * @returns
+     */
+    unpack(item, id, index) {
+        return Object.assign({ text: item[0], status: Number(item[1]), createdAt: this.getDate(item[2]), category: String(item[3]), completedAt: this.getDate(item[4]), id: id }, (index &&
+            index > 0 && {
+            order: index,
+        }));
+    }
+}
+exports.default = FocusoTasks;
