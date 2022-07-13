@@ -10,7 +10,7 @@ type containerType = {
   ownerId: string;
   order: number;
   categories?: {
-    [key: taskCategory]: string;
+    [key: string]: string;
   };
   [key: string]: any;
 };
@@ -19,7 +19,7 @@ type firebaseTimestamp = { seconds: number; nanoseconds: number };
 
 type taskText = string;
 type taskStatus = number;
-type taskCategory = string;
+type taskCategory = number;
 type taskId = string;
 type taskIndex = number;
 type taskCreatedAt = Date;

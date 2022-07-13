@@ -61,7 +61,7 @@ class FocusoTasks {
         text: text,
         status: 0,
         createdAt: new Date(timestamp),
-        category: String(category),
+        category: Number(category),
       }),
     };
 
@@ -129,8 +129,8 @@ class FocusoTasks {
   load(containerList: containerType[]): {
     dictionary: { [key: taskId]: taskType };
     stats: {
-      [key: taskCategory]: {
-        [key: taskStatus]: number;
+      [key: string]: {
+        [key: string]: number;
       };
     };
   } {
@@ -186,7 +186,7 @@ class FocusoTasks {
       item.text,
       Number(item.status),
       item.createdAt,
-      String(item.category),
+      Number(item.category),
       item.completedAt || null,
     ];
   }
@@ -203,7 +203,7 @@ class FocusoTasks {
       text: item[0],
       status: Number(item[1]),
       createdAt: this.getDate(item[2]),
-      category: String(item[3]),
+      category: Number(item[3]),
       completedAt: this.getDate(item[4]) || null,
       id: id,
       ...(index &&

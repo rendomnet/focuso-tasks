@@ -36,7 +36,7 @@ class FocusoTasks {
                 text: text,
                 status: 0,
                 createdAt: new Date(timestamp),
-                category: String(category),
+                category: Number(category),
             }),
         };
         // Create new container
@@ -126,7 +126,7 @@ class FocusoTasks {
             item.text,
             Number(item.status),
             item.createdAt,
-            String(item.category),
+            Number(item.category),
             item.completedAt || null,
         ];
     }
@@ -138,7 +138,7 @@ class FocusoTasks {
      * @returns
      */
     unpack(item, id, index) {
-        return Object.assign({ text: item[0], status: Number(item[1]), createdAt: this.getDate(item[2]), category: String(item[3]), completedAt: this.getDate(item[4]) || null, id: id }, (index &&
+        return Object.assign({ text: item[0], status: Number(item[1]), createdAt: this.getDate(item[2]), category: Number(item[3]), completedAt: this.getDate(item[4]) || null, id: id }, (index &&
             index > 0 && {
             order: index,
         }));

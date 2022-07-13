@@ -3,7 +3,7 @@ declare type containerType = {
     ownerId: string;
     order: number;
     categories?: {
-        [key: taskCategory]: string;
+        [key: string]: string;
     };
     [key: string]: any;
 };
@@ -13,7 +13,7 @@ declare type firebaseTimestamp = {
 };
 declare type taskText = string;
 declare type taskStatus = number;
-declare type taskCategory = string;
+declare type taskCategory = number;
 declare type taskId = string;
 declare type taskIndex = number;
 declare type taskCreatedAt = Date;

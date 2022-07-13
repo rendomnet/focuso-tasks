@@ -39,8 +39,8 @@ declare class FocusoTasks {
             [key: taskId]: taskType;
         };
         stats: {
-            [key: taskCategory]: {
-                [key: taskStatus]: number;
+            [key: string]: {
+                [key: string]: number;
             };
         };
     };
