@@ -1,20 +1,20 @@
 import { containerType, taskCategory, taskId, taskStatus, taskText, taskType } from "./types";
 declare class FocusoTasks {
     containers: containerType[];
-    containerLatest: containerType | null;
-    containerQuantity: number;
     dictionary: {
         [key: taskId]: taskType;
     };
-    addDoc: Function;
-    updateDoc: Function;
-    deleteField: Function;
+    onAdd: Function;
+    onUpdate: Function;
+    onDelete: Function;
     stats: {
         [key: taskCategory]: {
             [key: taskStatus]: number;
         };
     };
     constructor(props: any);
+    containerListLength: number;
+    containerLatest: containerType;
     private getDate;
     /**
      * Add task

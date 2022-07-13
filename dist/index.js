@@ -7,14 +7,14 @@ const firestore_size_1 = __importDefault(require("firestore-size"));
 const helpers_1 = require("./helpers");
 class FocusoTasks {
     constructor(props) {
+        this.containerListLength = (() => this.containers.length)();
+        this.containerLatest = (() => this.containers[this.containerListLength - 1] || null)();
         this.containers = [];
-        this.containerQuantity = this.containers.length;
-        this.containerLatest = this.containers[this.containerQuantity - 1] || null;
         this.dictionary = {};
         this.stats = {};
-        this.addDoc = () => null;
-        this.updateDoc = () => null;
-        this.deleteField = () => null;
+        this.onAdd = () => null;
+        this.onUpdate = () => null;
+        this.onDelete = () => null;
     }
     getDate(value) {
         return value;
@@ -45,14 +45,14 @@ class FocusoTasks {
         // Create new container
         // If no  containers or if latest container size exceeds 1mb
         if (this.containers.length < 1 || (0, firestore_size_1.default)(this.containerLatest) > 999000) {
-            this.addDoc({
-                data: Object.assign(Object.assign({}, data), { ownerId: userId, order: this.containerQuantity - 1 }),
+            this.onAdd({
+                data: Object.assign(Object.assign({}, data), { ownerId: userId, order: this.containerListLength - 1 }),
             });
         }
         else {
             if (!((_a = this.containerLatest) === null || _a === void 0 ? void 0 : _a.id))
                 return;
-            this.updateDoc({
+            this.onUpdate({
                 id: this.containerLatest.id,
                 data: Object.assign({}, data),
             });
@@ -61,8 +61,7 @@ class FocusoTasks {
     delete(id) {
         const task = this.dictionary[id];
         const containerId = this.containers[(task === null || task === void 0 ? void 0 : task.order) || 0].id;
-        this.deleteField({
-            collection: "todos",
+        this.onDelete({
             containerId: containerId,
             taskId: id,
         });
@@ -73,9 +72,8 @@ class FocusoTasks {
         const containerId = this.containers[(task === null || task === void 0 ? void 0 : task.order) || 0].id;
         const newData = Object.assign(Object.assign({}, task), value);
         const result = this.pack(newData);
-        this.updateDoc({
-            collection: "todos",
-            id: containerId,
+        this.onUpdate({
+            containerId: containerId,
             data: {
                 [id]: result,
             },
