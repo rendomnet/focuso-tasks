@@ -37,10 +37,6 @@ class FocusoTasks {
     this.onDelete = () => null;
   }
 
-  containerListLength = (() => this.containers.length)();
-  containerLatest = (() =>
-    this.containers[this.containerListLength - 1] || null)();
-
   private getDate(value: Date): Date {
     return value;
     // return !value
@@ -71,19 +67,22 @@ class FocusoTasks {
 
     // Create new container
     // If no  containers or if latest container size exceeds 1mb
-    if (this.containers.length < 1 || sizeof(this.containerLatest) > 999000) {
+
+    const containerLatest = this.containers[this.containers.length - 1] || null;
+
+    if (this.containers.length < 1 || sizeof(containerLatest) > 999000) {
       this.onAdd({
         data: {
           ...data,
           ownerId: userId,
-          order: this.containerListLength - 1,
+          order: this.containers.length - 1,
         },
       });
     } else {
-      if (!this.containerLatest?.id) return;
+      if (!containerLatest?.id) return;
 
       this.onUpdate({
-        id: this.containerLatest.id,
+        id: containerLatest.id,
         data: {
           ...data,
         },

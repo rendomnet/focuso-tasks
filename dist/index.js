@@ -7,8 +7,6 @@ const firestore_size_1 = __importDefault(require("firestore-size"));
 const helpers_1 = require("./helpers");
 class FocusoTasks {
     constructor(props) {
-        this.containerListLength = (() => this.containers.length)();
-        this.containerLatest = (() => this.containers[this.containerListLength - 1] || null)();
         this.containers = [];
         this.dictionary = {};
         this.stats = {};
@@ -30,7 +28,6 @@ class FocusoTasks {
      * @returns
      */
     add(payload) {
-        var _a;
         const { text, category, userId } = payload;
         const timestamp = new Date().valueOf();
         // Build task data
@@ -44,16 +41,17 @@ class FocusoTasks {
         };
         // Create new container
         // If no  containers or if latest container size exceeds 1mb
-        if (this.containers.length < 1 || (0, firestore_size_1.default)(this.containerLatest) > 999000) {
+        const containerLatest = this.containers[this.containers.length - 1] || null;
+        if (this.containers.length < 1 || (0, firestore_size_1.default)(containerLatest) > 999000) {
             this.onAdd({
-                data: Object.assign(Object.assign({}, data), { ownerId: userId, order: this.containerListLength - 1 }),
+                data: Object.assign(Object.assign({}, data), { ownerId: userId, order: this.containers.length - 1 }),
             });
         }
         else {
-            if (!((_a = this.containerLatest) === null || _a === void 0 ? void 0 : _a.id))
+            if (!(containerLatest === null || containerLatest === void 0 ? void 0 : containerLatest.id))
                 return;
             this.onUpdate({
-                id: this.containerLatest.id,
+                id: containerLatest.id,
                 data: Object.assign({}, data),
             });
         }

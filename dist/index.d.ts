@@ -13,8 +13,6 @@ declare class FocusoTasks {
         };
     };
     constructor(props: any);
-    containerListLength: number;
-    containerLatest: containerType;
     private getDate;
     /**
      * Add task
