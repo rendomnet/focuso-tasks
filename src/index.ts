@@ -15,14 +15,12 @@ import {
 
 class FocusoTasks {
   containers: containerType[];
-  containerLatest: containerType | null;
-  containerQuantity: number;
   dictionary: {
     [key: taskId]: taskType;
   };
-  addDoc: Function;
-  updateDoc: Function;
-  deleteField: Function;
+  onAdd: Function;
+  onUpdate: Function;
+  onDelete: Function;
   stats: {
     [key: taskCategory]: {
       [key: taskStatus]: number;
@@ -31,14 +29,17 @@ class FocusoTasks {
 
   constructor(props: any) {
     this.containers = [];
-    this.containerQuantity = this.containers.length;
-    this.containerLatest = this.containers[this.containerQuantity - 1] || null;
+
     this.dictionary = {};
     this.stats = {};
-    this.addDoc = () => null;
-    this.updateDoc = () => null;
-    this.deleteField = () => null;
+    this.onAdd = () => null;
+    this.onUpdate = () => null;
+    this.onDelete = () => null;
   }
+
+  containerListLength = (() => this.containers.length)();
+  containerLatest = (() =>
+    this.containers[this.containerListLength - 1] || null)();
 
   private getDate(value: Date): Date {
     return value;
@@ -71,17 +72,17 @@ class FocusoTasks {
     // Create new container
     // If no  containers or if latest container size exceeds 1mb
     if (this.containers.length < 1 || sizeof(this.containerLatest) > 999000) {
-      this.addDoc({
+      this.onAdd({
         data: {
           ...data,
           ownerId: userId,
-          order: this.containerQuantity - 1,
+          order: this.containerListLength - 1,
         },
       });
     } else {
       if (!this.containerLatest?.id) return;
 
-      this.updateDoc({
+      this.onUpdate({
         id: this.containerLatest.id,
         data: {
           ...data,
@@ -94,8 +95,7 @@ class FocusoTasks {
     const task = this.dictionary[id];
     const containerId = this.containers[task?.order || 0].id;
 
-    this.deleteField({
-      collection: "todos",
+    this.onDelete({
       containerId: containerId,
       taskId: id,
     });
@@ -114,9 +114,8 @@ class FocusoTasks {
     };
 
     const result = this.pack(newData);
-    this.updateDoc({
-      collection: "todos",
-      id: containerId,
+    this.onUpdate({
+      containerId: containerId,
       data: {
         [id]: result,
       },
