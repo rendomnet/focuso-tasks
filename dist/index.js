@@ -51,7 +51,7 @@ class FocusoTasks {
             if (!(containerLatest === null || containerLatest === void 0 ? void 0 : containerLatest.id))
                 return;
             this.onUpdate({
-                id: containerLatest.id,
+                containerId: containerLatest.id,
                 data: Object.assign({}, data),
             });
         }

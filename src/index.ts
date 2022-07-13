@@ -82,7 +82,7 @@ class FocusoTasks {
       if (!containerLatest?.id) return;
 
       this.onUpdate({
-        id: containerLatest.id,
+        containerId: containerLatest.id,
         data: {
           ...data,
         },
