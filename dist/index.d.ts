@@ -13,7 +13,9 @@ declare class FocusoTasks {
         };
     };
     constructor(props: any);
+    private isDate;
     private getDate;
+    private getTimestamp;
     /**
      * Add task
      * @param payload

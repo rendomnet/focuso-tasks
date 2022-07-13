@@ -37,13 +37,33 @@ class FocusoTasks {
     this.onDelete = () => null;
   }
 
-  private getDate(value: Date): Date {
-    return value;
-    // return !value
-    //   ? new Date()
-    //   : value.seconds
-    //   ? new Date(value.seconds * 1000)
-    //   : new Date(value);
+  // user defined type guard
+  //  isFruit(fruit: string): fruit is Fruit {
+  //   return ["apple", "banana", "grape"].indexOf("fruit") !== -1;
+  // }
+
+  // if (isFruit(myfruit)) {
+  //     // if this condition passes
+  //     // then TS compiler knows that myfruit is of the Fruit type
+  //     myfruit
+  // }
+
+  private isDate(value: any): boolean {
+    return typeof value?.getMonth === "function";
+  }
+
+  private getDate(value: any): Date {
+    return value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
+  }
+
+  private getTimestamp(value: any): number {
+    return this.isDate(value) // if date
+      ? new Date(value).valueOf()
+      : value?.seconds // if firebase date
+      ? value?.seconds * 1000
+      : typeof value === "number" // if number
+      ? value
+      : null;
   }
 
   /**
