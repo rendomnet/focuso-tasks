@@ -95,7 +95,8 @@ class FocusoTasks {
         data: {
           ...data,
           ownerId: userId,
-          order: this.containers.length - 1,
+          order:
+            this.containers.length - 1 < 0 ? 0 : this.containers.length - 1,
         },
       });
     } else {

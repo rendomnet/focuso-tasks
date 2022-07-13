@@ -61,7 +61,7 @@ class FocusoTasks {
         const containerLatest = this.containers[this.containers.length - 1] || null;
         if (this.containers.length < 1 || (0, firestore_size_1.default)(containerLatest) > 999000) {
             this.onAdd({
-                data: Object.assign(Object.assign({}, data), { ownerId: userId, order: this.containers.length - 1 }),
+                data: Object.assign(Object.assign({}, data), { ownerId: userId, order: this.containers.length - 1 < 0 ? 0 : this.containers.length - 1 }),
             });
         }
         else {
