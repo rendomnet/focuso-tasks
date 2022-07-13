@@ -127,7 +127,7 @@ class FocusoTasks {
             Number(item.status),
             item.createdAt,
             String(item.category),
-            item.completedAt || undefined,
+            item.completedAt || null,
         ];
     }
     /**
@@ -138,7 +138,7 @@ class FocusoTasks {
      * @returns
      */
     unpack(item, id, index) {
-        return Object.assign({ text: item[0], status: Number(item[1]), createdAt: this.getDate(item[2]), category: String(item[3]), completedAt: this.getDate(item[4]), id: id }, (index &&
+        return Object.assign({ text: item[0], status: Number(item[1]), createdAt: this.getDate(item[2]), category: String(item[3]), completedAt: this.getDate(item[4]) || null, id: id }, (index &&
             index > 0 && {
             order: index,
         }));

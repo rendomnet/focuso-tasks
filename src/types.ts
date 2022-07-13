@@ -23,7 +23,7 @@ type taskCategory = string;
 type taskId = string;
 type taskIndex = number;
 type taskCreatedAt = Date;
-type taskCompletedAt = Date | undefined;
+type taskCompletedAt = Date | null;
 
 type taskType = {
   id?: taskId;

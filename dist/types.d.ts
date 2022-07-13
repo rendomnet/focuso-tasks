@@ -17,7 +17,7 @@ declare type taskCategory = string;
 declare type taskId = string;
 declare type taskIndex = number;
 declare type taskCreatedAt = Date;
-declare type taskCompletedAt = Date | undefined;
+declare type taskCompletedAt = Date | null;
 declare type taskType = {
     id?: taskId;
     text: taskText;
