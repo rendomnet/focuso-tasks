@@ -21,6 +21,7 @@ class FocusoTasks {
   onAdd: Function;
   onUpdate: Function;
   onDelete: Function;
+  userId: string;
   stats: {
     [key: taskCategory]: {
       [key: taskStatus]: number;
@@ -28,6 +29,7 @@ class FocusoTasks {
   };
 
   constructor(props: any) {
+    this.userId = "";
     this.containers = [];
 
     this.dictionary = {};
@@ -126,7 +128,8 @@ class FocusoTasks {
 
     const task = this.dictionary[id];
 
-    const containerId = this.containers[task?.order || 0].id;
+    const containerId = this.containers[task?.order || 0]?.id;
+    if (!containerId) return;
 
     const newData = {
       ...task,
