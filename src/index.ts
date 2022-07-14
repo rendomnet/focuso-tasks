@@ -1,5 +1,5 @@
 import sizeof from "firestore-size";
-import { setDeep } from "./helpers";
+import { getDate, setDeep } from "./helpers";
 
 import {
   containerType,
@@ -31,41 +31,13 @@ class FocusoTasks {
   constructor(props: any) {
     this.userId = "";
     this.containers = [];
-
     this.dictionary = {};
     this.stats = {};
+
+    this.load = () => null;
     this.onAdd = () => null;
     this.onUpdate = () => null;
     this.onDelete = () => null;
-  }
-
-  // user defined type guard
-  //  isFruit(fruit: string): fruit is Fruit {
-  //   return ["apple", "banana", "grape"].indexOf("fruit") !== -1;
-  // }
-
-  // if (isFruit(myfruit)) {
-  //     // if this condition passes
-  //     // then TS compiler knows that myfruit is of the Fruit type
-  //     myfruit
-  // }
-
-  private isDate(value: any): boolean {
-    return typeof value?.getMonth === "function";
-  }
-
-  private getDate(value: any): Date {
-    return value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
-  }
-
-  private getTimestamp(value: any): number {
-    return this.isDate(value) // if date
-      ? new Date(value).valueOf()
-      : value?.seconds // if firebase date
-      ? value?.seconds * 1000
-      : typeof value === "number" // if number
-      ? value
-      : null;
   }
 
   /**
@@ -74,7 +46,7 @@ class FocusoTasks {
    * @returns
    */
   add(payload: { text: taskText; category: taskCategory; userId: string }) {
-    const { text, category, userId } = payload;
+    let { text, category, userId } = payload;
     const timestamp = new Date().valueOf();
 
     // Build task data
@@ -89,10 +61,15 @@ class FocusoTasks {
 
     // Create new container
     // If no  containers or if latest container size exceeds 1mb
+    const containerLatest: { id?: string } =
+      this.containers[this.containers.length - 1] || {};
 
-    const containerLatest = this.containers[this.containers.length - 1] || null;
-
-    if (this.containers.length < 1 || sizeof(containerLatest) > 999000) {
+    if (
+      this.containers.length < 1 ||
+      sizeof({ ...containerLatest, ...data }) > 999000
+    ) {
+      userId = userId || this.userId;
+      if (!userId) throw new Error("Focuso Tasks: User id not defined");
       this.onAdd({
         data: {
           ...data,
@@ -102,7 +79,8 @@ class FocusoTasks {
         },
       });
     } else {
-      if (!containerLatest?.id) return;
+      if (!containerLatest.id)
+        throw new Error("Focuso Tasks: Container id not found");
 
       this.onUpdate({
         containerId: containerLatest.id,
@@ -129,7 +107,7 @@ class FocusoTasks {
     const task = this.dictionary[id];
 
     const containerId = this.containers[task?.order || 0]?.id;
-    if (!containerId) return;
+    if (!containerId) throw new Error("Focuso Tasks: Container id not found");
 
     const newData = {
       ...task,
@@ -226,9 +204,9 @@ class FocusoTasks {
     return {
       text: item[0],
       status: Number(item[1]),
-      createdAt: this.getDate(item[2]),
+      createdAt: getDate(item[2]),
       category: Number(item[3]),
-      completedAt: this.getDate(item[4]) || null,
+      completedAt: getDate(item[4]) || null,
       id: id,
       ...(index &&
         index > 0 && {
