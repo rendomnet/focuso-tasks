@@ -46,7 +46,7 @@ declare class FocusoTasks {
      * Remove invalid containers
      * @param containerList
      */
-    sanitizeContainers(containerList: containerType[]): Promise<void>;
+    sanitizeContainers(containerList: containerType[]): Promise<containerType[]>;
     /**
      * Convert firebase docs list to tasks dictionary
      * @param containerList - array of container docs

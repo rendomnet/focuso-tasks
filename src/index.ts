@@ -162,10 +162,12 @@ class FocusoTasks {
    * Remove invalid containers
    * @param containerList
    */
-  async sanitizeContainers(containerList: containerType[]) {
+  async sanitizeContainers(
+    containerList: containerType[]
+  ): Promise<containerType[]> {
     let byOrder = {};
-    let emptyContainers = [];
     let lowContainers = [];
+    let result = [];
     for (const item of containerList) {
       // Add to dictionary by order
       if (item.order && !byOrder[item.order]) {
@@ -183,6 +185,7 @@ class FocusoTasks {
 
           if (this.deleteContainer) {
             if (lessKeys.id) await this.deleteContainer(lessKeys.id);
+            continue;
           }
         }
       }
@@ -190,24 +193,32 @@ class FocusoTasks {
       if (this.deleteContainer) {
         if (!item.order || !item.ownerId) {
           this.deleteContainer(item.id);
+          continue;
         }
       }
 
       // Detect empty containers
       if (isEmptyContainer(item)) {
         await this.deleteContainer(item.id);
+        continue;
       }
 
       // Detect low containers
       if (Object.keys(item).length < 20) {
         lowContainers.push(item);
+        continue;
       }
+
+      result.push(item);
     }
 
     // Merge low containers
     if (lowContainers.length > 1) {
-      // TODO
+      // TODO MERGE
+      result = [...result, ...lowContainers];
     }
+
+    return result;
   }
 
   /**
@@ -224,18 +235,19 @@ class FocusoTasks {
     };
   }> {
     const dictionary = {};
+    let list = await this.sanitizeContainers(containerList);
 
     // Sort by order
-    containerList = containerList.sort((a, b) => a.order - b.order);
+    let sorted = list.sort((a, b) => a.order - b.order);
 
-    this.containers = [...containerList];
+    this.containers = [...sorted];
 
-    if (containerList?.length > 0) {
+    if (sorted?.length > 0) {
       let stats = {
         0: { 0: 0, 1: 0 },
       };
 
-      for (const [index, container] of containerList.entries()) {
+      for (const [index, container] of sorted.entries()) {
         // Loop container
         for (let key in container) {
           // Skip container keys that are not dictionary keys
