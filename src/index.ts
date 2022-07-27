@@ -21,6 +21,7 @@ class FocusoTasks {
   onAdd: Function;
   onUpdate: Function;
   onDelete: Function;
+  getContainers: Function;
   userId: string;
   stats: {
     [key: taskCategory]: {
@@ -38,6 +39,12 @@ class FocusoTasks {
     this.onAdd = () => null;
     this.onUpdate = () => null;
     this.onDelete = () => null;
+    this.getContainers;
+  }
+
+  getContainer(order: number) {
+    const result = this.containers.find((item) => item.order === order);
+    return result || 0;
   }
 
   /**
@@ -45,7 +52,11 @@ class FocusoTasks {
    * @param payload
    * @returns
    */
-  add(payload: { text: taskText; category: taskCategory; userId: string }) {
+  async add(payload: {
+    text: taskText;
+    category: taskCategory;
+    userId: string;
+  }) {
     let { text, category, userId } = payload;
     const timestamp = new Date().valueOf();
 
@@ -68,14 +79,20 @@ class FocusoTasks {
       this.containers.length < 1 ||
       sizeof({ ...containerLatest, ...data }) > 999000
     ) {
+      // Create new task container
+      if (this.getContainers) {
+        const containers = await this.getContainers();
+        if (containers?.length) {
+          this.load(containers);
+        }
+      }
       userId = userId || this.userId;
       if (!userId) throw new Error("Focuso Tasks: User id not defined");
       this.onAdd({
         data: {
           ...data,
           ownerId: userId,
-          order:
-            this.containers.length - 1 < 0 ? 0 : this.containers.length - 1,
+          order: this.containers.length < 1 ? 0 : this.containers.length - 1,
         },
       });
     } else {
@@ -91,6 +108,10 @@ class FocusoTasks {
     }
   }
 
+  /**
+   * Delete single task
+   * @param id - task id
+   */
   delete(id: taskId) {
     const task = this.dictionary[id];
     const containerId = this.containers[task?.order || 0].id;
@@ -101,6 +122,10 @@ class FocusoTasks {
     });
   }
 
+  /**
+   * Update task
+   * @param payload - object {id, value}
+   */
   update(payload: { id: taskId; value: {} }) {
     const { id, value } = payload;
 
@@ -137,6 +162,20 @@ class FocusoTasks {
     };
   } {
     const dictionary = {};
+
+    // TODO: Sanitize duplicate containers
+    // let keyed = {};
+    // let order0 = containerList.map((item) => {
+    //   if (!keyed[item.order]) {
+    //     keyed[item.order] = keyed[item.order] ? keyed[item.order] + 1 : 1;
+    //     if (keyed[item.order] > 1) {
+    //       // Duplicate found
+    //     }
+    //   }
+    // });
+
+    // Sort by order
+    containerList = containerList.sort((a, b) => a.order - b.order);
 
     this.containers = [...containerList];
 
