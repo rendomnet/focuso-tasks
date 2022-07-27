@@ -7,15 +7,15 @@ declare class FocusoTasks {
     onAdd: Function;
     onUpdate: Function;
     onDelete: Function;
+    getContainers: Function;
+    userId: string;
     stats: {
         [key: taskCategory]: {
             [key: taskStatus]: number;
         };
     };
     constructor(props: any);
-    private isDate;
-    private getDate;
-    private getTimestamp;
+    getContainer(order: number): 0 | containerType;
     /**
      * Add task
      * @param payload
@@ -25,8 +25,16 @@ declare class FocusoTasks {
         text: taskText;
         category: taskCategory;
         userId: string;
-    }): void;
+    }): Promise<void>;
+    /**
+     * Delete single task
+     * @param id - task id
+     */
     delete(id: taskId): void;
+    /**
+     * Update task
+     * @param payload - object {id, value}
+     */
     update(payload: {
         id: taskId;
         value: {};

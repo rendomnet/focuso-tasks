@@ -21,7 +21,7 @@ class FocusoTasks {
   onAdd: Function;
   onUpdate: Function;
   onDelete: Function;
-  getContainers: Function;
+  refreshContainer: Function;
   userId: string;
   stats: {
     [key: taskCategory]: {
@@ -39,12 +39,19 @@ class FocusoTasks {
     this.onAdd = () => null;
     this.onUpdate = () => null;
     this.onDelete = () => null;
-    this.getContainers;
+    this.refreshContainer;
   }
 
-  getContainer(order: number) {
+  private getContainer(order: number) {
     const result = this.containers.find((item) => item.order === order);
-    return result || 0;
+    if (!result) throw new Error(`Task container ${order} not found`);
+    return result;
+  }
+
+  private getTask(id: taskId) {
+    const result = this.dictionary[id];
+    if (!result) throw new Error(`Task ${id} not found`);
+    return result;
   }
 
   /**
@@ -70,18 +77,18 @@ class FocusoTasks {
       }),
     };
 
-    // Create new container
-    // If no  containers or if latest container size exceeds 1mb
     const containerLatest: { id?: string } =
       this.containers[this.containers.length - 1] || {};
 
+    // Create new container
+    // If no  containers or if latest container size exceeds 1mb
     if (
       this.containers.length < 1 ||
       sizeof({ ...containerLatest, ...data }) > 999000
     ) {
       // Create new task container
-      if (this.getContainers) {
-        const containers = await this.getContainers();
+      if (this.refreshContainer) {
+        const containers = await this.refreshContainer();
         if (containers?.length) {
           this.load(containers);
         }
@@ -113,11 +120,11 @@ class FocusoTasks {
    * @param id - task id
    */
   delete(id: taskId) {
-    const task = this.dictionary[id];
-    const containerId = this.containers[task?.order || 0].id;
+    const task = this.getTask(id);
+    const container = this.getContainer(task.order);
 
     this.onDelete({
-      containerId: containerId,
+      containerId: container.id,
       taskId: id,
     });
   }
@@ -129,10 +136,8 @@ class FocusoTasks {
   update(payload: { id: taskId; value: {} }) {
     const { id, value } = payload;
 
-    const task = this.dictionary[id];
-
-    const containerId = this.containers[task?.order || 0]?.id;
-    if (!containerId) throw new Error("Focuso Tasks: Container id not found");
+    const task = this.getTask(id);
+    const container = this.getContainer(task.order);
 
     const newData = {
       ...task,
@@ -141,7 +146,7 @@ class FocusoTasks {
 
     const result = this.pack(newData);
     this.onUpdate({
-      containerId: containerId,
+      containerId: container.id,
       data: {
         [id]: result,
       },
