@@ -190,7 +190,7 @@ class FocusoTasks {
       }
       // Delete invalid containers
       if (this.deleteContainer) {
-        if (!item.order || !item.ownerId) {
+        if (typeof item.order === "undefined") {
           this.deleteContainer(item.id);
           continue;
         }
