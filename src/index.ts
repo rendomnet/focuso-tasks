@@ -37,7 +37,6 @@ class FocusoTasks {
     this.dictionary = {};
     this.stats = {};
 
-    this.load = () => null;
     this.onAdd = () => null;
     this.onUpdate = () => null;
     this.onDelete = () => null;
@@ -94,7 +93,7 @@ class FocusoTasks {
       if (this.refreshContainers) {
         const containers = await this.refreshContainers();
         if (containers?.length) {
-          this.load(containers);
+          await this.load(containers);
         }
       }
       userId = userId || this.userId;
