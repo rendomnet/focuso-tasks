@@ -7,7 +7,9 @@ declare class FocusoTasks {
     onAdd: Function;
     onUpdate: Function;
     onDelete: Function;
-    refreshContainer: Function;
+    onLoad: Function;
+    refreshContainers: Function;
+    deleteContainer: Function;
     userId: string;
     stats: {
         [key: taskCategory]: {
@@ -41,11 +43,16 @@ declare class FocusoTasks {
         value: {};
     }): void;
     /**
+     * Remove invalid containers
+     * @param containerList
+     */
+    sanitizeContainers(containerList: containerType[]): Promise<void>;
+    /**
      * Convert firebase docs list to tasks dictionary
      * @param containerList - array of container docs
      * @returns
      */
-    load(containerList: containerType[]): {
+    load(containerList: containerType[]): Promise<{
         dictionary: {
             [key: taskId]: taskType;
         };
@@ -54,7 +61,7 @@ declare class FocusoTasks {
                 [key: string]: number;
             };
         };
-    };
+    }>;
     /**
      * Task to array task
      * @param item

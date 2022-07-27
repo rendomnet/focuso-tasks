@@ -1,3 +1,5 @@
+import { containerType } from "./types";
+
 export function setDeep(obj: object, keyPath: string | string[], value: any) {
   if (!Array.isArray(keyPath)) keyPath = keyPath.split(".");
 
@@ -28,6 +30,10 @@ export function getTimestamp(value: any): number {
     : typeof value === "number" // if number
     ? value
     : null;
+}
+
+export function isEmptyContainer(item: containerType): boolean {
+  return Object.keys(item).length < 4;
 }
 
 // user defined type guard

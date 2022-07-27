@@ -24,7 +24,9 @@ class FocusoTasks {
         this.onAdd = () => null;
         this.onUpdate = () => null;
         this.onDelete = () => null;
-        this.refreshContainer;
+        this.refreshContainers;
+        this.deleteContainer;
+        this.onLoad;
     }
     getContainer(order) {
         const result = this.containers.find((item) => item.order === order);
@@ -62,8 +64,8 @@ class FocusoTasks {
             if (this.containers.length < 1 ||
                 (0, firestore_size_1.default)(Object.assign(Object.assign({}, containerLatest), data)) > 999000) {
                 // Create new task container
-                if (this.refreshContainer) {
-                    const containers = yield this.refreshContainer();
+                if (this.refreshContainers) {
+                    const containers = yield this.refreshContainers();
                     if (containers === null || containers === void 0 ? void 0 : containers.length) {
                         this.load(containers);
                     }
@@ -72,7 +74,9 @@ class FocusoTasks {
                 if (!userId)
                     throw new Error("Focuso Tasks: User id not defined");
                 this.onAdd({
-                    data: Object.assign(Object.assign({}, data), { ownerId: userId, order: this.containers.length < 1 ? 0 : this.containers.length - 1 }),
+                    data: Object.assign(Object.assign({}, data), { ownerId: userId, 
+                        // createdAt: new Date(),
+                        order: this.containers.length < 1 ? 0 : this.containers.length - 1 }),
                 });
             }
             else {
@@ -115,55 +119,99 @@ class FocusoTasks {
         });
     }
     /**
+     * Remove invalid containers
+     * @param containerList
+     */
+    sanitizeContainers(containerList) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let byOrder = {};
+            let emptyContainers = [];
+            let lowContainers = [];
+            for (const item of containerList) {
+                // Add to dictionary by order
+                if (item.order && !byOrder[item.order]) {
+                    byOrder[item.order] = byOrder[item.order]
+                        ? byOrder[item.order].push(item)
+                        : [byOrder[item.order]];
+                    if (byOrder[item.order].length > 1) {
+                        // Duplicate found
+                        const lessKeys = byOrder[item.order].reduce((prev, current) => {
+                            return Object.keys(prev).length < Object.keys(current).length
+                                ? prev
+                                : current;
+                        });
+                        if (this.deleteContainer) {
+                            if (lessKeys.id)
+                                yield this.deleteContainer(lessKeys.id);
+                        }
+                    }
+                }
+                // Delete invalid containers
+                if (this.deleteContainer) {
+                    if (!item.order || !item.ownerId) {
+                        this.deleteContainer(item.id);
+                    }
+                }
+                // Detect empty containers
+                if ((0, helpers_1.isEmptyContainer)(item)) {
+                    yield this.deleteContainer(item.id);
+                }
+                // Detect low containers
+                if (Object.keys(item).length < 20) {
+                    lowContainers.push(item);
+                }
+            }
+            // Merge low containers
+            if (lowContainers.length > 1) {
+                // TODO
+            }
+        });
+    }
+    /**
      * Convert firebase docs list to tasks dictionary
      * @param containerList - array of container docs
      * @returns
      */
     load(containerList) {
         var _a;
-        const dictionary = {};
-        // TODO: Sanitize duplicate containers
-        // let keyed = {};
-        // let order0 = containerList.map((item) => {
-        //   if (!keyed[item.order]) {
-        //     keyed[item.order] = keyed[item.order] ? keyed[item.order] + 1 : 1;
-        //     if (keyed[item.order] > 1) {
-        //       // Duplicate found
-        //     }
-        //   }
-        // });
-        // Sort by order
-        containerList = containerList.sort((a, b) => a.order - b.order);
-        this.containers = [...containerList];
-        if ((containerList === null || containerList === void 0 ? void 0 : containerList.length) > 0) {
-            let stats = {
-                0: { 0: 0, 1: 0 },
-            };
-            for (const [index, container] of containerList.entries()) {
-                // Loop container
-                for (let key in container) {
-                    // Skip container keys that are not dictionary keys
-                    if (["ownerId", "order", "id"].includes(key))
-                        continue;
-                    const taskPacked = container[key];
-                    dictionary[key] = Object.assign(Object.assign({}, this.unpack(taskPacked, key, index)), { order: container.order });
-                    // Count categories
-                    const categoryId = dictionary[key].category;
-                    if ((_a = stats === null || stats === void 0 ? void 0 : stats[categoryId]) === null || _a === void 0 ? void 0 : _a[dictionary[key].status]) {
-                        stats[categoryId][dictionary[key].status]++;
-                    }
-                    else {
-                        (0, helpers_1.setDeep)(stats, [categoryId, dictionary[key].status], 1);
+        return __awaiter(this, void 0, void 0, function* () {
+            const dictionary = {};
+            // Sort by order
+            containerList = containerList.sort((a, b) => a.order - b.order);
+            this.containers = [...containerList];
+            if ((containerList === null || containerList === void 0 ? void 0 : containerList.length) > 0) {
+                let stats = {
+                    0: { 0: 0, 1: 0 },
+                };
+                for (const [index, container] of containerList.entries()) {
+                    // Loop container
+                    for (let key in container) {
+                        // Skip container keys that are not dictionary keys
+                        if (["ownerId", "order", "id", "createdAt"].includes(key))
+                            continue;
+                        const taskPacked = container[key];
+                        dictionary[key] = Object.assign(Object.assign({}, this.unpack(taskPacked, key, index)), { order: container.order });
+                        // Count categories
+                        const categoryId = dictionary[key].category;
+                        if ((_a = stats === null || stats === void 0 ? void 0 : stats[categoryId]) === null || _a === void 0 ? void 0 : _a[dictionary[key].status]) {
+                            stats[categoryId][dictionary[key].status]++;
+                        }
+                        else {
+                            (0, helpers_1.setDeep)(stats, [categoryId, dictionary[key].status], 1);
+                        }
                     }
                 }
+                this.dictionary = dictionary;
+                this.stats = stats;
+                if (this.onLoad) {
+                    this.onLoad({ dictionary, stats });
+                }
+                return {
+                    dictionary,
+                    stats,
+                };
             }
-            this.dictionary = dictionary;
-            this.stats = stats;
-            return {
-                dictionary,
-                stats,
-            };
-        }
+        });
     }
     /**
      * Task to array task

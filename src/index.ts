@@ -1,5 +1,5 @@
 import sizeof from "firestore-size";
-import { getDate, setDeep } from "./helpers";
+import { getDate, isEmptyContainer, setDeep } from "./helpers";
 
 import {
   containerType,
@@ -21,7 +21,9 @@ class FocusoTasks {
   onAdd: Function;
   onUpdate: Function;
   onDelete: Function;
-  refreshContainer: Function;
+  onLoad: Function;
+  refreshContainers: Function;
+  deleteContainer: Function;
   userId: string;
   stats: {
     [key: taskCategory]: {
@@ -39,7 +41,9 @@ class FocusoTasks {
     this.onAdd = () => null;
     this.onUpdate = () => null;
     this.onDelete = () => null;
-    this.refreshContainer;
+    this.refreshContainers;
+    this.deleteContainer;
+    this.onLoad;
   }
 
   private getContainer(order: number) {
@@ -87,8 +91,8 @@ class FocusoTasks {
       sizeof({ ...containerLatest, ...data }) > 999000
     ) {
       // Create new task container
-      if (this.refreshContainer) {
-        const containers = await this.refreshContainer();
+      if (this.refreshContainers) {
+        const containers = await this.refreshContainers();
         if (containers?.length) {
           this.load(containers);
         }
@@ -99,6 +103,7 @@ class FocusoTasks {
         data: {
           ...data,
           ownerId: userId,
+          // createdAt: new Date(),
           order: this.containers.length < 1 ? 0 : this.containers.length - 1,
         },
       });
@@ -154,30 +159,71 @@ class FocusoTasks {
   }
 
   /**
+   * Remove invalid containers
+   * @param containerList
+   */
+  async sanitizeContainers(containerList: containerType[]) {
+    let byOrder = {};
+    let emptyContainers = [];
+    let lowContainers = [];
+    for (const item of containerList) {
+      // Add to dictionary by order
+      if (item.order && !byOrder[item.order]) {
+        byOrder[item.order] = byOrder[item.order]
+          ? byOrder[item.order].push(item)
+          : [byOrder[item.order]];
+
+        if (byOrder[item.order].length > 1) {
+          // Duplicate found
+          const lessKeys = byOrder[item.order].reduce((prev, current) => {
+            return Object.keys(prev).length < Object.keys(current).length
+              ? prev
+              : current;
+          });
+
+          if (this.deleteContainer) {
+            if (lessKeys.id) await this.deleteContainer(lessKeys.id);
+          }
+        }
+      }
+      // Delete invalid containers
+      if (this.deleteContainer) {
+        if (!item.order || !item.ownerId) {
+          this.deleteContainer(item.id);
+        }
+      }
+
+      // Detect empty containers
+      if (isEmptyContainer(item)) {
+        await this.deleteContainer(item.id);
+      }
+
+      // Detect low containers
+      if (Object.keys(item).length < 20) {
+        lowContainers.push(item);
+      }
+    }
+
+    // Merge low containers
+    if (lowContainers.length > 1) {
+      // TODO
+    }
+  }
+
+  /**
    * Convert firebase docs list to tasks dictionary
    * @param containerList - array of container docs
    * @returns
    */
-  load(containerList: containerType[]): {
+  async load(containerList: containerType[]): Promise<{
     dictionary: { [key: taskId]: taskType };
     stats: {
       [key: string]: {
         [key: string]: number;
       };
     };
-  } {
+  }> {
     const dictionary = {};
-
-    // TODO: Sanitize duplicate containers
-    // let keyed = {};
-    // let order0 = containerList.map((item) => {
-    //   if (!keyed[item.order]) {
-    //     keyed[item.order] = keyed[item.order] ? keyed[item.order] + 1 : 1;
-    //     if (keyed[item.order] > 1) {
-    //       // Duplicate found
-    //     }
-    //   }
-    // });
 
     // Sort by order
     containerList = containerList.sort((a, b) => a.order - b.order);
@@ -193,7 +239,7 @@ class FocusoTasks {
         // Loop container
         for (let key in container) {
           // Skip container keys that are not dictionary keys
-          if (["ownerId", "order", "id"].includes(key)) continue;
+          if (["ownerId", "order", "id", "createdAt"].includes(key)) continue;
 
           const taskPacked: taskPackedType = container[key];
 
@@ -215,6 +261,9 @@ class FocusoTasks {
 
       this.dictionary = dictionary;
       this.stats = stats;
+      if (this.onLoad) {
+        this.onLoad({ dictionary, stats });
+      }
       return {
         dictionary,
         stats,

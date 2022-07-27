@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getTimestamp = exports.getDate = exports.isDate = exports.setDeep = void 0;
+exports.isEmptyContainer = exports.getTimestamp = exports.getDate = exports.isDate = exports.setDeep = void 0;
 function setDeep(obj, keyPath, value) {
     if (!Array.isArray(keyPath))
         keyPath = keyPath.split(".");
@@ -34,6 +34,10 @@ function getTimestamp(value) {
                 : null;
 }
 exports.getTimestamp = getTimestamp;
+function isEmptyContainer(item) {
+    return Object.keys(item).length < 4;
+}
+exports.isEmptyContainer = isEmptyContainer;
 // user defined type guard
 //  isFruit(fruit: string): fruit is Fruit {
 //   return ["apple", "banana", "grape"].indexOf("fruit") !== -1;
