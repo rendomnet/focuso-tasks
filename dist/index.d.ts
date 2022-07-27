@@ -7,7 +7,7 @@ declare class FocusoTasks {
     onAdd: Function;
     onUpdate: Function;
     onDelete: Function;
-    getContainers: Function;
+    refreshContainer: Function;
     userId: string;
     stats: {
         [key: taskCategory]: {
@@ -15,7 +15,8 @@ declare class FocusoTasks {
         };
     };
     constructor(props: any);
-    getContainer(order: number): 0 | containerType;
+    private getContainer;
+    private getTask;
     /**
      * Add task
      * @param payload
