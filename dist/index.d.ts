@@ -62,6 +62,7 @@ declare class FocusoTasks {
             };
         };
     }>;
+    mergeLowContainers(): void;
     /**
      * Task to array task
      * @param item

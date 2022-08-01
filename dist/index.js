@@ -154,22 +154,15 @@ class FocusoTasks {
                     }
                 }
                 // Detect empty containers
-                if ((0, helpers_1.isEmptyContainer)(item)) {
-                    yield this.deleteContainer(item.id);
-                    continue;
-                }
-                // Detect low containers
-                if (Object.keys(item).length < 20) {
-                    lowContainers.push(item);
-                    continue;
-                }
+                // This will delete any new containers
+                // if (isEmptyContainer(item)) {
+                //   await this.deleteContainer(item.id);
+                //   continue;
+                // }
                 result.push(item);
             }
-            // Merge low containers
-            if (lowContainers.length > 1) {
-                // TODO MERGE
-                result = [...result, ...lowContainers];
-            }
+            // If 1 low container
+            // result = [...result, ...lowContainers];
             return result;
         });
     }
@@ -182,7 +175,8 @@ class FocusoTasks {
         var _a;
         return __awaiter(this, void 0, void 0, function* () {
             const dictionary = {};
-            let list = yield this.sanitizeContainers(containerList);
+            let list = containerList;
+            // let list = await this.sanitizeContainers(containerList);
             // Sort by order
             let sorted = list.sort((a, b) => a.order - b.order);
             this.containers = [...sorted];
@@ -219,6 +213,37 @@ class FocusoTasks {
                 };
             }
         });
+    }
+    mergeLowContainers() {
+        let lowContainers = [];
+        for (const container of this.containers) {
+            // Detect low containers
+            if (Object.keys(container).length < 20) {
+                lowContainers.push(container);
+            }
+        }
+        console.log("lowContainers", lowContainers);
+        // Merge low containers
+        if (lowContainers.length > 1) {
+            // TODO MERGE
+            const lowestOrderContainer = (0, helpers_1.findByLowesValue)(lowContainers, "order");
+            let mergedContainer = {};
+            let containersIdsToDelete = [];
+            if (lowestOrderContainer === null || lowestOrderContainer === void 0 ? void 0 : lowestOrderContainer.id) {
+                for (const container of lowContainers) {
+                    if (container.id === lowestOrderContainer.id)
+                        continue;
+                    let tasks = (0, helpers_1.getContainerTasks)(container);
+                    mergedContainer = Object.assign(Object.assign({}, mergedContainer), tasks);
+                    containersIdsToDelete.push(container.id);
+                }
+                // Add order, ownerId
+                mergedContainer = Object.assign(Object.assign({}, mergedContainer), lowestOrderContainer);
+                // todo Save merged
+                // todo Delete rest
+                console.log("mergedContainer", mergedContainer);
+            }
+        }
     }
     /**
      * Task to array task

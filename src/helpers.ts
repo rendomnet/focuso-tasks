@@ -36,6 +36,21 @@ export function isEmptyContainer(item: containerType): boolean {
   return Object.keys(item).length < 4;
 }
 
+export function findByLowesValue<T>(
+  array: T[],
+  propertyName: string
+): T | undefined {
+  return array.reduce(
+    (acc, curr) => (curr[propertyName] < acc[propertyName] ? curr : acc),
+    array[0] || undefined
+  );
+}
+
+export function getContainerTasks(container: containerType): object {
+  const { id, order, ownerId, ...tasks } = container;
+  return tasks || {};
+}
+
 // user defined type guard
 //  isFruit(fruit: string): fruit is Fruit {
 //   return ["apple", "banana", "grape"].indexOf("fruit") !== -1;

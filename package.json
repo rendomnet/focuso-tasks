@@ -1,6 +1,6 @@
 {
   "name": "focuso-tasks",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "focuso-tasks helpers",
   "main": "dist/index.js",
   "scripts": {
