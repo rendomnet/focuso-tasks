@@ -218,9 +218,8 @@ class FocusoTasks {
         let lowContainers = [];
         for (const container of this.containers) {
             // Detect low containers
-            if (Object.keys(container).length < 20) {
+            if (Object.keys(container).length < 20)
                 lowContainers.push(container);
-            }
         }
         console.log("lowContainers", lowContainers);
         // Merge low containers
@@ -247,10 +246,10 @@ class FocusoTasks {
     }
     /**
      * Task to array task
-     * @param item
+     * @param item - {text, status = 0 |1 , createdAt, category id, completedAt}
      * @returns
      */
-    pack(item) {
+    static pack(item) {
         return [
             item.text,
             Number(item.status),
@@ -266,11 +265,14 @@ class FocusoTasks {
      * @param index
      * @returns
      */
-    unpack(item, id, index) {
+    static unpack(item, id, index) {
         return Object.assign({ text: item[0], status: Number(item[1]), createdAt: (0, helpers_1.getDate)(item[2]), category: Number(item[3]), completedAt: (0, helpers_1.getDate)(item[4]) || null, id: id }, (index &&
             index > 0 && {
             order: index,
         }));
+    }
+    static getSize(payload) {
+        return (0, firestore_size_1.default)(payload);
     }
 }
 exports.default = FocusoTasks;

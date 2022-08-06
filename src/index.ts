@@ -28,6 +28,8 @@ class FocusoTasks {
   onUpdate: Function;
   onDelete: Function;
   onLoad: Function;
+  pack: Function;
+  unpack: Function;
   refreshContainers: Function;
   deleteContainer: Function;
   userId: string;
@@ -285,9 +287,7 @@ class FocusoTasks {
     let lowContainers = [];
     for (const container of this.containers) {
       // Detect low containers
-      if (Object.keys(container).length < 20) {
-        lowContainers.push(container);
-      }
+      if (Object.keys(container).length < 20) lowContainers.push(container);
     }
 
     console.log("lowContainers", lowContainers);
@@ -322,10 +322,10 @@ class FocusoTasks {
 
   /**
    * Task to array task
-   * @param item
+   * @param item - {text, status = 0 |1 , createdAt, category id, completedAt}
    * @returns
    */
-  private pack(item: taskType): taskPackedType {
+  static pack(item: taskType): taskPackedType {
     return [
       item.text,
       Number(item.status),
@@ -342,7 +342,7 @@ class FocusoTasks {
    * @param index
    * @returns
    */
-  private unpack(item: taskPackedType, id: taskId, index: taskIndex): taskType {
+  static unpack(item: taskPackedType, id: taskId, index: taskIndex): taskType {
     return {
       text: item[0],
       status: Number(item[1]),
@@ -355,6 +355,10 @@ class FocusoTasks {
           order: index,
         }),
     };
+  }
+
+  static getSize(payload: object | object[]) {
+    return sizeof(payload);
   }
 }
 

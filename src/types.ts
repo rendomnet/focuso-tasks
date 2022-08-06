@@ -36,11 +36,11 @@ type taskType = {
 };
 
 type taskPackedType = [
-  taskText,
-  taskStatus,
-  taskCreatedAt,
-  taskCategory,
-  taskCompletedAt?
+  taskText, // text
+  taskStatus, // number status 0: notcompleted, 1, completed
+  taskCreatedAt, // Date
+  taskCategory, // category id number
+  taskCompletedAt? // Date
 ];
 
 export {

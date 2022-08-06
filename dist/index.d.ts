@@ -1,4 +1,4 @@
-import { containerType, taskCategory, taskId, taskStatus, taskText, taskType } from "./types";
+import { containerType, taskCategory, taskId, taskIndex, taskPackedType, taskStatus, taskText, taskType } from "./types";
 declare class FocusoTasks {
     containers: containerType[];
     dictionary: {
@@ -8,6 +8,8 @@ declare class FocusoTasks {
     onUpdate: Function;
     onDelete: Function;
     onLoad: Function;
+    pack: Function;
+    unpack: Function;
     refreshContainers: Function;
     deleteContainer: Function;
     userId: string;
@@ -65,10 +67,10 @@ declare class FocusoTasks {
     mergeLowContainers(): void;
     /**
      * Task to array task
-     * @param item
+     * @param item - {text, status = 0 |1 , createdAt, category id, completedAt}
      * @returns
      */
-    private pack;
+    static pack(item: taskType): taskPackedType;
     /**
      * Array task to object task
      * @param item
@@ -76,6 +78,7 @@ declare class FocusoTasks {
      * @param index
      * @returns
      */
-    private unpack;
+    static unpack(item: taskPackedType, id: taskId, index: taskIndex): taskType;
+    static getSize(payload: object | object[]): number;
 }
 export default FocusoTasks;
