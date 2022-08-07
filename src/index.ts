@@ -77,7 +77,7 @@ class FocusoTasks {
     taskId?: taskId;
   }) {
     let { text, category, userId, taskId } = payload;
-    const timestamp = new Date().valueOf();
+    let timestamp = taskId ? Number(taskId) : new Date().valueOf();
 
     if (!taskId) taskId = String(timestamp);
 
@@ -86,7 +86,9 @@ class FocusoTasks {
       [taskId]: FocusoTasks.pack({
         text: text,
         status: 0,
-        createdAt: new Date(taskId),
+        createdAt: new Date(
+          typeof taskId === "string" ? Number(taskId) : taskId
+        ),
         category: Number(category),
       }),
     };
@@ -334,12 +336,10 @@ class FocusoTasks {
     let result: taskPackedType = [
       item.text,
       Number(item.status),
-      getDate(item.createdAt),
+      getDate(item.createdAt) || new Date(),
       Number(item.category),
+      getDate(item.completedAt) || null,
     ];
-
-    if (item.completedAt && getDate(item.completedAt))
-      result[4] = getDate(item.completedAt);
     if (item.modifiedAt && getDate(item.modifiedAt))
       result[5] = getDate(item.modifiedAt);
 
