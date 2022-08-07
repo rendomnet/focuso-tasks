@@ -1,6 +1,6 @@
 {
   "name": "focuso-tasks",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "focuso-tasks helpers",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",

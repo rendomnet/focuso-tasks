@@ -53,9 +53,17 @@ class FocusoTasks {
     this.onLoad;
   }
 
-  private getContainer(order: number) {
-    const result = this.containers.find((item) => item.order === order);
-    if (!result) throw new Error(`Task container ${order} not found`);
+  private getContainer(params: { taskId: taskId; order: number }) {
+    const { taskId, order } = params;
+    const result = this.containers.find((item) => {
+      if (taskId) return item[taskId];
+      else return item.order === order;
+    });
+
+    if (!result)
+      throw new Error(
+        `Task container not found taskId: ${taskId}, order: ${order}`
+      );
     return result;
   }
 
@@ -138,7 +146,7 @@ class FocusoTasks {
    */
   delete(id: taskId) {
     const task = this.getTask(id);
-    const container = this.getContainer(task.order);
+    const container = this.getContainer({ taskId: id, order: task.order });
 
     this.onDelete({
       containerId: container.id,
@@ -154,7 +162,7 @@ class FocusoTasks {
     const { id, value } = payload;
 
     const task = this.getTask(id);
-    const container = this.getContainer(task.order);
+    const container = this.getContainer({ taskId: id, order: task.order });
 
     const newData = {
       ...task,
