@@ -18,13 +18,13 @@ export function isDate(value: any): boolean {
   return typeof value?.getMonth === "function";
 }
 
-export function getDate(value: any): Date {
-  try {
-    return value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
-  } catch (error) {
-    console.log("error: ", error);
-    throw new Error("Focuso Todo: Get Date: Date is invalid");
-  }
+export function getDate(value: any): Date | null | undefined {
+  let result: Date | undefined;
+  if (value?.seconds) result = new Date(value.seconds * 1000);
+  else result = new Date(value);
+  if (result && result instanceof Date && !isNaN(result?.getTime()))
+    return result;
+  else return null;
 }
 
 export function getTimestamp(value: any): number {
