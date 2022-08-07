@@ -17,21 +17,24 @@ declare type taskCategory = number;
 declare type taskId = string;
 declare type taskIndex = number;
 declare type taskCreatedAt = Date;
-declare type taskCompletedAt = Date | null;
+declare type taskCompletedAt = Date | null | undefined;
+declare type taskModifiedAt = Date | null | undefined;
 declare type taskType = {
-    id?: taskId;
     text: taskText;
     status: taskStatus;
     category: taskCategory;
     createdAt: taskCreatedAt;
     completedAt?: taskCompletedAt;
+    modifiedAt?: taskModifiedAt;
     order?: number;
+    id?: taskId;
 };
 declare type taskPackedType = [
     taskText,
     taskStatus,
     taskCreatedAt,
     taskCategory,
-    taskCompletedAt?
+    taskCompletedAt?,
+    taskModifiedAt?
 ];
 export { taskText, taskCategory, taskStatus, taskType, containerType, taskPackedType, taskId, taskIndex, firebaseTimestamp, };

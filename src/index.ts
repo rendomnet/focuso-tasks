@@ -337,8 +337,10 @@ class FocusoTasks {
       Number(item.category),
     ];
 
-    if (item.completedAt) result[4] = getDate(item.completedAt);
-    if (item.modifiedAt) result[5] = getDate(item.modifiedAt);
+    if (item.completedAt && getDate(item.completedAt))
+      result[4] = getDate(item.completedAt);
+    if (item.modifiedAt && getDate(item.modifiedAt))
+      result[5] = getDate(item.modifiedAt);
 
     return result;
   }
@@ -356,7 +358,7 @@ class FocusoTasks {
       status: Number(item[1]),
       createdAt: getDate(item[2]),
       category: Number(item[3]),
-      completedAt: getDate(item[4]) || null,
+      ...(item[4] && { completedAt: getDate(item[4]) }),
       ...(item[5] && { modifiedAt: getDate(item[5]) }),
       ...(id && { id: id }),
       ...(index &&

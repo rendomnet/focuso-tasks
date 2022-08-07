@@ -30,6 +30,7 @@ declare class FocusoTasks {
         text: taskText;
         category: taskCategory;
         userId: string;
+        taskId?: taskId;
     }): Promise<void>;
     /**
      * Delete single task

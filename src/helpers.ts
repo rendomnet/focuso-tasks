@@ -19,7 +19,12 @@ export function isDate(value: any): boolean {
 }
 
 export function getDate(value: any): Date {
-  return value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
+  try {
+    return value?.seconds ? new Date(value.seconds * 1000) : new Date(value);
+  } catch (error) {
+    console.log("error: ", error);
+    throw new Error("Focuso Todo: Get Date: Date is invalid");
+  }
 }
 
 export function getTimestamp(value: any): number {
