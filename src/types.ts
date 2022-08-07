@@ -23,16 +23,18 @@ type taskCategory = number;
 type taskId = string;
 type taskIndex = number;
 type taskCreatedAt = Date;
-type taskCompletedAt = Date | null;
+type taskCompletedAt = Date | null | undefined;
+type taskModifiedAt = Date | null | undefined;
 
 type taskType = {
-  id?: taskId;
   text: taskText;
   status: taskStatus;
   category: taskCategory;
   createdAt: taskCreatedAt;
   completedAt?: taskCompletedAt;
+  modifiedAt?: taskModifiedAt;
   order?: number;
+  id?: taskId;
 };
 
 type taskPackedType = [
@@ -40,7 +42,8 @@ type taskPackedType = [
   taskStatus, // number status 0: notcompleted, 1, completed
   taskCreatedAt, // Date
   taskCategory, // category id number
-  taskCompletedAt? // Date
+  taskCompletedAt?, // Date
+  taskModifiedAt? //
 ];
 
 export {

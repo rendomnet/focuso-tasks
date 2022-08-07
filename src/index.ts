@@ -74,16 +74,19 @@ class FocusoTasks {
     text: taskText;
     category: taskCategory;
     userId: string;
+    taskId?: taskId;
   }) {
-    let { text, category, userId } = payload;
+    let { text, category, userId, taskId } = payload;
     const timestamp = new Date().valueOf();
+
+    if (!taskId) taskId = String(timestamp);
 
     // Build task data
     const data = {
-      [timestamp]: this.pack({
+      [taskId]: this.pack({
         text: text,
         status: 0,
-        createdAt: new Date(timestamp),
+        createdAt: new Date(taskId),
         category: Number(category),
       }),
     };
@@ -154,6 +157,7 @@ class FocusoTasks {
     const newData = {
       ...task,
       ...value,
+      modifiedAt: new Date(),
     };
 
     const result = this.pack(newData);
@@ -326,13 +330,17 @@ class FocusoTasks {
    * @returns
    */
   static pack(item: taskType): taskPackedType {
-    return [
+    let result: taskPackedType = [
       item.text,
       Number(item.status),
-      item.createdAt,
+      getDate(item.createdAt),
       Number(item.category),
-      item.completedAt || null,
     ];
+
+    if (item.completedAt) result[4] = getDate(item.completedAt);
+    if (item.modifiedAt) result[5] = getDate(item.modifiedAt);
+
+    return result;
   }
 
   /**
@@ -349,7 +357,8 @@ class FocusoTasks {
       createdAt: getDate(item[2]),
       category: Number(item[3]),
       completedAt: getDate(item[4]) || null,
-      id: id,
+      ...(item[5] && { modifiedAt: getDate(item[5]) }),
+      ...(id && { id: id }),
       ...(index &&
         index > 0 && {
           order: index,
