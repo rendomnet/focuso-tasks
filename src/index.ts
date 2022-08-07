@@ -83,7 +83,7 @@ class FocusoTasks {
 
     // Build task data
     const data = {
-      [taskId]: this.pack({
+      [taskId]: FocusoTasks.pack({
         text: text,
         status: 0,
         createdAt: new Date(taskId),
@@ -160,7 +160,7 @@ class FocusoTasks {
       modifiedAt: new Date(),
     };
 
-    const result = this.pack(newData);
+    const result = FocusoTasks.pack(newData);
     this.onUpdate({
       containerId: container.id,
       data: {
@@ -238,6 +238,7 @@ class FocusoTasks {
     };
   }> {
     const dictionary = {};
+    let that = this;
     let list = containerList;
     // let list = await this.sanitizeContainers(containerList);
 
@@ -260,7 +261,7 @@ class FocusoTasks {
           const taskPacked: taskPackedType = container[key];
 
           dictionary[key] = {
-            ...this.unpack(taskPacked, key, index),
+            ...FocusoTasks.unpack(taskPacked, key, index),
             order: container.order,
           };
 
