@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
     "outDir": "./lib",
-    "module": "es2021",
-    "target": "es2021",
+    "module": "es2020",
+    "target": "es2022",
     "moduleResolution": "node",
     "lib": ["es2017", "es7", "es6", "dom"],
     "declaration": true,
