@@ -283,15 +283,14 @@ class FocusoTasks {
           // Build completed days
           if (task.completedAt) {
             const dayKey = this.getTaskDay(task.completedAt);
-            if (completed.hasOwnProperty(dayKey))
-              completed[dayKey].push(task.id);
-            else completed[dayKey] = [task.id];
+            if (completed.hasOwnProperty(dayKey)) completed[dayKey].push(task);
+            else completed[dayKey] = [task];
           }
 
           // Build active tasks
           if (task.status === 0) {
-            if (active[task.category]) active[task.category].push(task.id);
-            else active[task.category] = [task.id];
+            if (active[task.category]) active[task.category].push(task);
+            else active[task.category] = [task];
           }
 
           // Count categories
