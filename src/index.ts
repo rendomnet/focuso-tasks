@@ -241,6 +241,7 @@ class FocusoTasks {
    */
   async load(containerList: containerType[]): Promise<{
     dictionary: { [key: taskId]: taskType };
+    completed: { [key: string]: taskId[] };
     stats: {
       [key: string]: {
         [key: string]: number;
@@ -248,6 +249,8 @@ class FocusoTasks {
     };
   }> {
     const dictionary = {};
+    const completed = {};
+    const active = [];
     let that = this;
     let list = containerList;
     // let list = await this.sanitizeContainers(containerList);
@@ -270,10 +273,23 @@ class FocusoTasks {
 
           const taskPacked: taskPackedType = container[key];
 
+          const task = FocusoTasks.unpack(taskPacked, key, index);
           dictionary[key] = {
-            ...FocusoTasks.unpack(taskPacked, key, index),
+            ...task,
             order: container.order,
           };
+
+          // Build completed days
+          if (task.completedAt) {
+            const dayKey = `${task.completedAt.getDate()}${task.completedAt.getFullYear()}`;
+            if (completed[dayKey]) completed[dayKey].push(task.id);
+            else completed[dayKey] = [task.id];
+          }
+
+          // Build active tasks
+          if (task.status === 0) {
+            active.push(task.id);
+          }
 
           // Count categories
           const categoryId = dictionary[key].category;
@@ -294,6 +310,8 @@ class FocusoTasks {
       return {
         dictionary,
         stats,
+        completed,
+        active,
       };
     }
   }
