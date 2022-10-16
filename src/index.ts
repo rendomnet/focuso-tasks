@@ -242,7 +242,7 @@ class FocusoTasks {
   async load(containerList: containerType[]): Promise<{
     dictionary: { [key: taskId]: taskType };
     completed: { [key: string]: taskId[] };
-    active: taskId[];
+    active: { [key: taskCategory]: taskId[] };
     stats: {
       [key: string]: {
         [key: string]: number;
@@ -251,7 +251,7 @@ class FocusoTasks {
   }> {
     const dictionary = {};
     const completed = {};
-    const active = [];
+    const active = {};
     let that = this;
     let list = containerList;
     // let list = await this.sanitizeContainers(containerList);
@@ -290,7 +290,8 @@ class FocusoTasks {
 
           // Build active tasks
           if (task.status === 0) {
-            active.push(task.id);
+            if (active[task.category]) active[task.category].push(task.id);
+            else active[task.category] = [task.id];
           }
 
           // Count categories

@@ -62,7 +62,9 @@ declare class FocusoTasks {
         completed: {
             [key: string]: taskId[];
         };
-        active: taskId[];
+        active: {
+            [key: taskCategory]: taskId[];
+        };
         stats: {
             [key: string]: {
                 [key: string]: number;
