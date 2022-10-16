@@ -283,8 +283,13 @@ class FocusoTasks {
           // Build completed days
           if (task.completedAt) {
             const dayKey = this.getTaskDay(task.completedAt);
-            if (completed.hasOwnProperty(dayKey)) completed[dayKey].push(task);
-            else completed[dayKey] = [task];
+
+            // Create deep path
+            if (!completed[dayKey]) completed[dayKey] = {};
+            if (!completed[dayKey][task.category])
+              completed[dayKey][task.category] = [];
+
+            completed[dayKey][task.category].push({ ...task });
           }
 
           // Build active tasks
