@@ -306,7 +306,7 @@ class FocusoTasks {
       this.dictionary = dictionary;
       this.stats = stats;
       if (this.onLoad) {
-        this.onLoad({ dictionary, stats });
+        this.onLoad({ dictionary, stats, completed, active });
       }
       return {
         dictionary,
