@@ -59,6 +59,10 @@ declare class FocusoTasks {
         dictionary: {
             [key: taskId]: taskType;
         };
+        completed: {
+            [key: string]: taskId[];
+        };
+        active: taskId[];
         stats: {
             [key: string]: {
                 [key: string]: number;

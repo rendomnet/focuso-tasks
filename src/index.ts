@@ -242,6 +242,7 @@ class FocusoTasks {
   async load(containerList: containerType[]): Promise<{
     dictionary: { [key: taskId]: taskType };
     completed: { [key: string]: taskId[] };
+    active: taskId[];
     stats: {
       [key: string]: {
         [key: string]: number;
