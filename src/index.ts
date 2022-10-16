@@ -282,8 +282,9 @@ class FocusoTasks {
 
           // Build completed days
           if (task.completedAt) {
-            const dayKey = `${task.completedAt.getDate()}${task.completedAt.getFullYear()}`;
-            if (completed[dayKey]) completed[dayKey].push(task.id);
+            const dayKey = this.getTaskDay(task.completedAt);
+            if (completed.hasOwnProperty(dayKey))
+              completed[dayKey].push(task.id);
             else completed[dayKey] = [task.id];
           }
 
@@ -315,6 +316,10 @@ class FocusoTasks {
         active,
       };
     }
+  }
+
+  getTaskDay(completedAt: Date): string {
+    return `${completedAt.getDate()}${completedAt.getMonth()}${completedAt.getFullYear()}`;
   }
 
   mergeLowContainers() {

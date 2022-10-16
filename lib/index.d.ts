@@ -69,6 +69,7 @@ declare class FocusoTasks {
             };
         };
     }>;
+    getTaskDay(completedAt: Date): string;
     mergeLowContainers(): void;
     /**
      * Task to array task
