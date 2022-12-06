@@ -11,11 +11,20 @@ type containerType = {
   order: number;
   categories?: {};
   sections?: {};
+  tasks?: {};
   [key: string]: any;
 };
 
 type firebaseTimestamp = { seconds: number; nanoseconds: number };
 
+type containerSizeObjectType = {
+  size: number;
+  id?: containerIdType;
+  createdAt?: string;
+  order?: number;
+};
+
+type containerIdType = string;
 type taskText = string;
 type taskStatus = number;
 type taskCategory = number;
@@ -40,6 +49,7 @@ type taskType = {
   order?: number;
   id?: taskId;
   index?: taskIndex;
+  containerId?: containerIdType;
 };
 
 type categoryType = {
@@ -78,4 +88,7 @@ export {
   firebaseTimestamp,
   sectionType,
   categoryType,
+  containerIdType,
+  taskSectionId,
+  containerSizeObjectType,
 };

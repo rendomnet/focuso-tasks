@@ -19,12 +19,19 @@ import {
   taskType,
   sectionType,
   categoryType,
+  containerIdType,
+  containerSizeObjectType,
+  taskSectionId,
 } from "./types";
 
 class FocusoTasks {
-  containers: containerType[];
+  containers: {
+    [key: containerIdType]: containerSizeObjectType;
+  },
   dictionary: {
-    [key: taskId]: taskType;
+    tasks: { [key: taskId]: taskType };
+    categories: { [key: taskCategory]: categoryType };
+    sections: { [key: taskSectionId]: sectionType };
   };
   onAdd: Function;
   onUpdate: Function;
@@ -43,8 +50,12 @@ class FocusoTasks {
 
   constructor(props: any) {
     this.userId = "";
-    this.containers = [];
-    this.dictionary = {};
+    this.containers = {};
+    this.dictionary = {
+      tasks: {},
+      categories: {},
+      sections: {},
+    };
     this.stats = {};
 
     this.onAdd = () => null;
@@ -55,22 +66,18 @@ class FocusoTasks {
     this.onLoad;
   }
 
-  private getContainer(params: { taskId: taskId; order: number }) {
-    const { taskId, order } = params;
-    const result = this.containers.find((item) => {
-      if (taskId) return item[taskId];
-      else return item.order === order;
-    });
-
-    if (!result)
-      throw new Error(
-        `Task container not found taskId: ${taskId}, order: ${order}`
-      );
+  private getSmallestContainer(): containerSizeObjectType {
+    let result: containerSizeObjectType;
+    for (const id in this.containers) {
+      let container = this.containers[id];
+      if (!result) result = container;
+      else if (container?.size < result?.size) result = container;
+    }
     return result;
   }
 
   private getTask(id: taskId) {
-    const result = this.dictionary[id];
+    const result = this.dictionary.tasks[id];
     if (!result) throw new Error(`Task ${id} not found`);
     return result;
   }
@@ -103,15 +110,11 @@ class FocusoTasks {
       }),
     };
 
-    const containerLatest: { id?: string } =
-      this.containers[this.containers.length - 1] || {};
+    const smallestContainer = this.getSmallestContainer();
 
     // Create new container
     // If no  containers or if latest container size exceeds 1mb
-    if (
-      this.containers.length < 1 ||
-      sizeof({ ...containerLatest, ...data }) > 999000
-    ) {
+    if (!smallestContainer.size || smallestContainer.size > 999000) {
       // Create new task container
       if (this.refreshContainers) {
         const containers = await this.refreshContainers();
@@ -121,20 +124,21 @@ class FocusoTasks {
       }
       userId = userId || this.userId;
       if (!userId) throw new Error("Focuso Tasks: User id not defined");
+      
       this.onAdd({
         data: {
           ...data,
           ownerId: userId,
           // createdAt: new Date(),
-          order: this.containers.length < 1 ? 0 : this.containers.length - 1,
+          containerId: smallestContainer.id,
         },
       });
     } else {
-      if (!containerLatest.id)
+      if (!smallestContainer.id)
         throw new Error("Focuso Tasks: Container id not found");
 
       this.onUpdate({
-        containerId: containerLatest.id,
+        containerId: smallestContainer.id,
         data: {
           ...data,
         },
@@ -148,10 +152,9 @@ class FocusoTasks {
    */
   delete(id: taskId) {
     const task = this.getTask(id);
-    const container = this.getContainer({ taskId: id, order: task.order });
 
     this.onDelete({
-      containerId: container.id,
+      containerId: task.containerId,
       taskId: id,
     });
   }
@@ -164,7 +167,6 @@ class FocusoTasks {
     const { id, value } = payload;
 
     const task = this.getTask(id);
-    const container = this.getContainer({ taskId: id, order: task.order });
 
     const newData = {
       ...task,
@@ -174,66 +176,11 @@ class FocusoTasks {
 
     const result = FocusoTasks.pack(newData);
     this.onUpdate({
-      containerId: container.id,
+      containerId: task.containerId,
       data: {
         [id]: result,
       },
     });
-  }
-
-  /**
-   * Remove invalid containers
-   * @param containerList
-   */
-  async sanitizeContainers(
-    containerList: containerType[]
-  ): Promise<containerType[]> {
-    let byOrder = {};
-    let lowContainers: containerType[] = [];
-    let result: containerType[] = [];
-    for (const item of containerList) {
-      // Add to dictionary by order
-      if (item.order && !byOrder[item.order]) {
-        byOrder[item.order] = byOrder[item.order]
-          ? byOrder[item.order].push(item)
-          : [byOrder[item.order]];
-
-        if (byOrder[item.order].length > 1) {
-          // Duplicate found
-          const lessKeys = byOrder[item.order].reduce((prev, current) => {
-            return Object.keys(prev).length < Object.keys(current).length
-              ? prev
-              : current;
-          });
-
-          if (this.deleteContainer) {
-            if (lessKeys.id) await this.deleteContainer(lessKeys.id);
-            continue;
-          }
-        }
-      }
-      // Delete invalid containers
-      if (this.deleteContainer) {
-        if (typeof item.order === "undefined") {
-          this.deleteContainer(item.id);
-          continue;
-        }
-      }
-
-      // Detect empty containers
-      // This will delete any new containers
-      // if (isEmptyContainer(item)) {
-      //   await this.deleteContainer(item.id);
-      //   continue;
-      // }
-
-      result.push(item);
-    }
-
-    // If 1 low container
-    // result = [...result, ...lowContainers];
-
-    return result;
   }
 
   /**
@@ -243,8 +190,12 @@ class FocusoTasks {
    */
   async load(containerList: containerType[]): Promise<{
     dictionary: Object;
-    completed: { [key: string]: taskId[] };
-    active: { [key: taskCategory]: taskId[] };
+    closed: { [key: string]: taskId[] };
+    tree: {
+      [key: taskCategory]: {
+        [key: taskSectionId]: taskId[];
+      };
+    };
     due: Object;
     stats: {
       [key: string]: {
@@ -257,160 +208,116 @@ class FocusoTasks {
       categories: {},
       sections: {},
     };
-    const completed = {};
-    const active = {};
+    let closed = {};
     let tree = {};
-    const due = {};
+    let due = {};
+    let stats = {};
 
-    let list = containerList;
+    // CONTAINERS
 
-    // Sort by order
-    let sorted = list.sort((a, b) => a.order - b.order);
-
-    this.containers = [...sorted];
-
-    if (sorted?.length > 0) {
-      let stats = {
-        0: { 0: 0, 1: 0 },
+    for (const [index, container] of containerList.entries()) {
+      //
+      this.containers[container.id] = {
+        size: sizeof(container),
+        id: container.id,
+        createdAt: container.createdAt,
+        order: container.order,
       };
 
-      for (const [index, container] of sorted.entries()) {
-        // Loop container
-        for (let taskId in container) {
-          // Skip container keys that are not dictionary keys
-          if (
-            ["ownerId", "order", "id", "createdAt", "categories"].includes(
-              taskId
-            )
-          )
-            continue;
+      // Loop container fields
+      for (let taskId in container) {
+        // Skip container keys that are not dictionary keys
+        if (
+          ["ownerId", "order", "id", "createdAt", "categories"].includes(taskId)
+        )
+          continue;
 
-          const taskPacked: taskPackedType = container[taskId];
-          const task = FocusoTasks.unpack(taskPacked, taskId, index);
+        const taskPacked: taskPackedType = container[taskId];
+        const task = FocusoTasks.unpack(taskPacked, taskId, index);
 
-          const categoryId = task.categoryId;
-          const sectionId = task.sectionId || `defaultSection-${categoryId}`;
+        const categoryId = task.categoryId;
+        const sectionId = task.sectionId || `defaultSection-${categoryId}`;
 
-          const category: categoryType =
-            container.categories?.[categoryId] || {};
+        const category: categoryType = container.categories?.[categoryId] || {};
 
-          const section: sectionType = container.sections?.[sectionId] || {};
+        const section: sectionType = container.sections?.[sectionId] || {};
 
-          // DICTIONARY
-          dictionary.tasks[taskId] = {
-            ...task,
-            order: container.order,
+        // DICTIONARY
+        dictionary.tasks[taskId] = {
+          ...task,
+          containerId: container.id,
+        };
+
+        // DUE
+        if (task.due?.date) {
+          const dueKey = this.getTaskDay(new Date(task.due?.date));
+          due[dueKey] = [...(due[dueKey] || []), taskId];
+        }
+
+        // CLOSED TASKS
+        if (task.completedAt) {
+          const dayKey = this.getTaskDay(task.completedAt);
+
+          // Create deep path
+          if (!closed[dayKey]) closed[dayKey] = {};
+          if (!closed[dayKey][categoryId]) closed[dayKey][categoryId] = [];
+
+          closed[dayKey][categoryId].push({ ...task });
+        }
+
+        // TREE
+        if (task.status === 0) {
+          tree = {
+            ...tree,
+            [categoryId]: {
+              ...(tree[categoryId] || {}),
+              [sectionId]: [...(tree[categoryId]?.[sectionId] || []), taskId],
+            },
+          };
+        }
+
+        // CATEGORIES
+        if (!dictionary.categories[categoryId])
+          dictionary.categories[categoryId] = {
+            id: categoryId,
+            title: category?.title || "category " + categoryId,
+            index: category?.index,
           };
 
-          // DUE
-          if (task.due?.date) {
-            const dueKey = this.getTaskDay(new Date(task.due?.date));
-            due[dueKey] = [...(due[dueKey] || []), taskId];
-          }
+        // SECTIONS
+        if (!dictionary.sections[sectionId])
+          dictionary.sections[sectionId] = {
+            id: sectionId,
+            title: section?.title || "section " + sectionId,
+            index: section?.index,
+          };
 
-          // CLOSED TASKS
-          if (task.completedAt) {
-            const dayKey = this.getTaskDay(task.completedAt);
+        // Count categories
 
-            // Create deep path
-            if (!completed[dayKey]) completed[dayKey] = {};
-            if (!completed[dayKey][categoryId])
-              completed[dayKey][categoryId] = [];
-
-            completed[dayKey][categoryId].push({ ...task });
-          }
-
-          // TREE
-          if (task.status === 0) {
-            tree = {
-              ...tree,
-              [categoryId]: {
-                ...(tree[categoryId] || {}),
-                [sectionId]: [...(tree[categoryId]?.[sectionId] || []), taskId],
-              },
-            };
-          }
-
-          // CATEGORIES
-          if (!dictionary.categories[categoryId])
-            dictionary.categories[categoryId] = {
-              id: categoryId,
-              title: category?.title || "category " + categoryId,
-              index: category?.index,
-            };
-
-          // SECTIONS
-          if (!dictionary.sections[sectionId])
-            dictionary.sections[sectionId] = {
-              id: sectionId,
-              title: section?.title || "section " + sectionId,
-              index: section?.index,
-            };
-
-          // Count categories
-
-          if (stats?.[categoryId]?.[dictionary.tasks[taskId].status]) {
-            stats[categoryId][dictionary.tasks[taskId].status]++;
-          } else {
-            setDeep(stats, [categoryId, dictionary.tasks[taskId].status], 1);
-          }
+        if (stats?.[categoryId]?.[dictionary.tasks[taskId].status]) {
+          stats[categoryId][dictionary.tasks[taskId].status]++;
+        } else {
+          setDeep(stats, [categoryId, dictionary.tasks[taskId].status], 1);
         }
       }
 
-      this.dictionary = dictionary.tasks;
+      this.dictionary = dictionary;
       this.stats = stats;
       if (this.onLoad) {
-        this.onLoad({ dictionary, stats, completed, active });
+        this.onLoad({ dictionary, stats, closed, tree });
       }
       return {
         dictionary,
         stats,
         due,
-        completed,
-        active,
+        closed,
+        tree,
       };
     }
   }
 
   getTaskDay(completedAt: Date): string {
     return `${completedAt.getDate()}${completedAt.getMonth()}${completedAt.getFullYear()}`;
-  }
-
-  mergeLowContainers() {
-    let lowContainers = [];
-    for (const container of this.containers) {
-      // Detect low containers
-      if (Object.keys(container).length < 20) lowContainers.push(container);
-    }
-
-    console.log("lowContainers", lowContainers);
-
-    // Merge low containers
-    if (lowContainers.length > 1) {
-      // TODO MERGE
-      const lowestOrderContainer: containerType = findByLowesValue(
-        lowContainers,
-        "order"
-      );
-
-      let mergedContainer = {};
-      let containersIdsToDelete = [];
-      if (lowestOrderContainer?.id) {
-        for (const container of lowContainers) {
-          if (container.id === lowestOrderContainer.id) continue;
-
-          let tasks = getContainerTasks(container);
-          mergedContainer = { ...mergedContainer, ...tasks };
-          containersIdsToDelete.push(container.id);
-        }
-
-        // Add order, ownerId
-        mergedContainer = { ...mergedContainer, ...lowestOrderContainer };
-        // todo Save merged
-        // todo Delete rest
-        console.log("mergedContainer", mergedContainer);
-      }
-    }
   }
 
   /**
