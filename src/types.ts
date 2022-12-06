@@ -30,6 +30,9 @@ type taskType = {
   text: taskText;
   status: taskStatus;
   category: taskCategory;
+  categoryId?: taskCategory;
+  sectionId?: string;
+  due?: { date: string };
   createdAt: taskCreatedAt;
   completedAt?: taskCompletedAt;
   modifiedAt?: taskModifiedAt;

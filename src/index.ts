@@ -240,21 +240,27 @@ class FocusoTasks {
    * @returns
    */
   async load(containerList: containerType[]): Promise<{
-    dictionary: { [key: taskId]: taskType };
+    dictionary: Object;
     completed: { [key: string]: taskId[] };
     active: { [key: taskCategory]: taskId[] };
+    due: Object;
     stats: {
       [key: string]: {
         [key: string]: number;
       };
     };
   }> {
-    const dictionary = {};
+    const dictionary = {
+      tasks: {},
+      categories: {},
+      sections: {},
+    };
     const completed = {};
     const active = {};
-    let that = this;
+    let tree = {};
+    const due = {};
+
     let list = containerList;
-    // let list = await this.sanitizeContainers(containerList);
 
     // Sort by order
     let sorted = list.sort((a, b) => a.order - b.order);
@@ -268,19 +274,30 @@ class FocusoTasks {
 
       for (const [index, container] of sorted.entries()) {
         // Loop container
-        for (let key in container) {
+        for (let taskId in container) {
           // Skip container keys that are not dictionary keys
-          if (["ownerId", "order", "id", "createdAt"].includes(key)) continue;
+          if (["ownerId", "order", "id", "createdAt"].includes(taskId))
+            continue;
 
-          const taskPacked: taskPackedType = container[key];
+          const taskPacked: taskPackedType = container[taskId];
+          const task = FocusoTasks.unpack(taskPacked, taskId, index);
 
-          const task = FocusoTasks.unpack(taskPacked, key, index);
-          dictionary[key] = {
+          const categoryId = task.categoryId || task.category;
+          const sectionId = task.sectionId || `defaultSection-${task.category}`;
+
+          // DICTIONARY
+          dictionary.tasks[taskId] = {
             ...task,
             order: container.order,
           };
 
-          // Build completed days
+          // DUE
+          if (task.due?.date) {
+            const dueKey = this.getTaskDay(new Date(task.due?.date));
+            due[dueKey] = [...(due[dueKey] || []), taskId];
+          }
+
+          // CLOSED TASKS
           if (task.completedAt) {
             const dayKey = this.getTaskDay(task.completedAt);
 
@@ -292,24 +309,28 @@ class FocusoTasks {
             completed[dayKey][task.category].push({ ...task });
           }
 
-          // Build active tasks
+          // TREE
           if (task.status === 0) {
-            if (active[task.category]) active[task.category].push(task);
-            else active[task.category] = [task];
+            tree = {
+              ...tree,
+              [categoryId]: {
+                ...(tree[categoryId] || {}),
+                [sectionId]: [...(tree[categoryId]?.[sectionId] || []), taskId],
+              },
+            };
           }
 
           // Count categories
-          const categoryId = dictionary[key].category;
 
-          if (stats?.[categoryId]?.[dictionary[key].status]) {
-            stats[categoryId][dictionary[key].status]++;
+          if (stats?.[categoryId]?.[dictionary.tasks[taskId].status]) {
+            stats[categoryId][dictionary.tasks[taskId].status]++;
           } else {
-            setDeep(stats, [categoryId, dictionary[key].status], 1);
+            setDeep(stats, [categoryId, dictionary.tasks[taskId].status], 1);
           }
         }
       }
 
-      this.dictionary = dictionary;
+      this.dictionary = dictionary.tasks;
       this.stats = stats;
       if (this.onLoad) {
         this.onLoad({ dictionary, stats, completed, active });
@@ -317,6 +338,7 @@ class FocusoTasks {
       return {
         dictionary,
         stats,
+        due,
         completed,
         active,
       };
