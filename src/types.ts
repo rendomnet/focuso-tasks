@@ -9,9 +9,8 @@ type containerType = {
   id?: string;
   ownerId: string;
   order: number;
-  categories?: {
-    [key: string]: string;
-  };
+  categories?: {};
+  sections?: {};
   [key: string]: any;
 };
 
@@ -25,19 +24,34 @@ type taskIndex = number;
 type taskCreatedAt = Date;
 type taskCompletedAt = Date | null | undefined;
 type taskModifiedAt = Date | null | undefined;
+type taskSectionId = string | null | undefined;
+type taskDue = { date: string } | null | undefined;
 
 type taskType = {
   text: taskText;
   status: taskStatus;
-  category: taskCategory;
+  category?: taskCategory;
   categoryId?: taskCategory;
-  sectionId?: string;
-  due?: { date: string };
+  sectionId?: taskSectionId;
+  due?: taskDue;
   createdAt: taskCreatedAt;
   completedAt?: taskCompletedAt;
   modifiedAt?: taskModifiedAt;
   order?: number;
   id?: taskId;
+  index?: taskIndex;
+};
+
+type categoryType = {
+  title: string;
+  id?: taskCategory;
+  index?: number;
+};
+
+type sectionType = {
+  title: string;
+  id?: string;
+  index?: number;
 };
 
 type taskPackedType = [
@@ -46,7 +60,10 @@ type taskPackedType = [
   taskCreatedAt, // Date
   taskCategory, // category id number
   taskCompletedAt?, // Date
-  taskModifiedAt? //
+  taskModifiedAt?, //
+  taskSectionId?, //
+  taskIndex?,
+  taskDue? //
 ];
 
 export {
@@ -59,4 +76,6 @@ export {
   taskId,
   taskIndex,
   firebaseTimestamp,
+  sectionType,
+  categoryType,
 };

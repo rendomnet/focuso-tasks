@@ -17,6 +17,8 @@ import {
   taskStatus,
   taskText,
   taskType,
+  sectionType,
+  categoryType,
 } from "./types";
 
 class FocusoTasks {
@@ -80,11 +82,11 @@ class FocusoTasks {
    */
   async add(payload: {
     text: taskText;
-    category: taskCategory;
+    categoryId: taskCategory;
     userId: string;
     taskId?: taskId;
   }) {
-    let { text, category, userId, taskId } = payload;
+    let { text, categoryId, userId, taskId } = payload;
     let timestamp = taskId ? Number(taskId) : new Date().valueOf();
 
     if (!taskId) taskId = String(timestamp);
@@ -97,7 +99,7 @@ class FocusoTasks {
         createdAt: new Date(
           typeof taskId === "string" ? Number(taskId) : taskId
         ),
-        category: Number(category),
+        categoryId: Number(categoryId),
       }),
     };
 
@@ -276,14 +278,23 @@ class FocusoTasks {
         // Loop container
         for (let taskId in container) {
           // Skip container keys that are not dictionary keys
-          if (["ownerId", "order", "id", "createdAt"].includes(taskId))
+          if (
+            ["ownerId", "order", "id", "createdAt", "categories"].includes(
+              taskId
+            )
+          )
             continue;
 
           const taskPacked: taskPackedType = container[taskId];
           const task = FocusoTasks.unpack(taskPacked, taskId, index);
 
-          const categoryId = task.categoryId || task.category;
-          const sectionId = task.sectionId || `defaultSection-${task.category}`;
+          const categoryId = task.categoryId;
+          const sectionId = task.sectionId || `defaultSection-${categoryId}`;
+
+          const category: categoryType =
+            container.categories?.[categoryId] || {};
+
+          const section: sectionType = container.sections?.[sectionId] || {};
 
           // DICTIONARY
           dictionary.tasks[taskId] = {
@@ -303,10 +314,10 @@ class FocusoTasks {
 
             // Create deep path
             if (!completed[dayKey]) completed[dayKey] = {};
-            if (!completed[dayKey][task.category])
-              completed[dayKey][task.category] = [];
+            if (!completed[dayKey][categoryId])
+              completed[dayKey][categoryId] = [];
 
-            completed[dayKey][task.category].push({ ...task });
+            completed[dayKey][categoryId].push({ ...task });
           }
 
           // TREE
@@ -319,6 +330,22 @@ class FocusoTasks {
               },
             };
           }
+
+          // CATEGORIES
+          if (!dictionary.categories[categoryId])
+            dictionary.categories[categoryId] = {
+              id: categoryId,
+              title: category?.title || "category " + categoryId,
+              index: category?.index,
+            };
+
+          // SECTIONS
+          if (!dictionary.sections[sectionId])
+            dictionary.sections[sectionId] = {
+              id: sectionId,
+              title: section?.title || "section " + sectionId,
+              index: section?.index,
+            };
 
           // Count categories
 
@@ -388,7 +415,7 @@ class FocusoTasks {
 
   /**
    * Task to array task
-   * @param item - {text, status = 0 |1 , createdAt, category id, completedAt}
+   * @param item - {text, status = 0 |1 , createdAt, categoryId id, completedAt}
    * @returns
    */
   static pack(item: taskType): taskPackedType {
@@ -396,12 +423,15 @@ class FocusoTasks {
       item.text,
       Number(item.status),
       getDate(item.createdAt) || new Date(),
-      Number(item.category),
+      Number(item.categoryId),
       getDate(item.completedAt) || null,
     ];
     if (item.modifiedAt && getDate(item.modifiedAt))
       result[5] = getDate(item.modifiedAt);
+    if (item.sectionId) result[6] = item.sectionId;
 
+    if (typeof item.index === "number") result[7] = item.index;
+    if (item.due) result[8] = item.due;
     return result;
   }
 
@@ -414,17 +444,16 @@ class FocusoTasks {
    */
   static unpack(item: taskPackedType, id: taskId, index: taskIndex): taskType {
     return {
+      ...(id && { id: id }),
       text: item[0],
       status: Number(item[1]),
       createdAt: getDate(item[2]),
-      category: Number(item[3]),
+      categoryId: Number(item[3]),
       ...(item[4] && { completedAt: getDate(item[4]) }),
       ...(item[5] && { modifiedAt: getDate(item[5]) }),
-      ...(id && { id: id }),
-      ...(index &&
-        index > 0 && {
-          order: index,
-        }),
+      ...(item[6] && { sectionId: item[6] }),
+      ...(item[7] && { index: item[7] }),
+      // ...(item[8] && { due: item[8] }),
     };
   }
 
