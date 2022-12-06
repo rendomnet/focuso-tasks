@@ -28,7 +28,7 @@ declare class FocusoTasks {
      */
     add(payload: {
         text: taskText;
-        category: taskCategory;
+        categoryId: taskCategory;
         userId: string;
         taskId?: taskId;
     }): Promise<void>;
@@ -56,15 +56,14 @@ declare class FocusoTasks {
      * @returns
      */
     load(containerList: containerType[]): Promise<{
-        dictionary: {
-            [key: taskId]: taskType;
-        };
+        dictionary: Object;
         completed: {
             [key: string]: taskId[];
         };
         active: {
             [key: taskCategory]: taskId[];
         };
+        due: Object;
         stats: {
             [key: string]: {
                 [key: string]: number;
@@ -75,7 +74,7 @@ declare class FocusoTasks {
     mergeLowContainers(): void;
     /**
      * Task to array task
-     * @param item - {text, status = 0 |1 , createdAt, category id, completedAt}
+     * @param item - {text, status = 0 |1 , createdAt, categoryId id, completedAt}
      * @returns
      */
     static pack(item: taskType): taskPackedType;
